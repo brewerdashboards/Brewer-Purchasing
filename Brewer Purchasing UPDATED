@@ -1,11 +1,13 @@
 SELECT DISTINCT products.Name as 'ProductName',
+/* currencies.id, */
 suppliers.Name as 'SupplierName', 
 orders.DateCreated as 'OrderDate',
 orders.DateETA as 'ArrivalDate', 
 transactions.count as 'Count', 
 transactions_orders.UnitPrice as 'UnitPrice',
-((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) as 'Subtotal',
-(((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) * (((tax_rates.PST + tax_rates.GST + tax_rates.HST)/100.00 + 1.00))) as 'TotalCost',
+/* ((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) as 'Subtotal', */
+(((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) * currencies.rate_to_cad) as 'Subtotal',
+(((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) * (currencies.rate_to_cad) * (((tax_rates.PST + tax_rates.GST + tax_rates.HST)/100.00 + 1.00))) as 'TotalCost',
 paymentoptions.Name as 'PaidWith', 
 employees.FirstName as 'PaidBy', 
 financial_codes.Name as 'FundingGroup', 
@@ -16,6 +18,7 @@ complete_incomplete.status as 'Complete_Incomplete'
     ELSE NULL
 END AS 'Complete_Incomplete' */
 FROM orders 
+INNER JOIN currencies ON orders.orig_currency_id = currencies.id
 INNER JOIN suppliers ON orders.supplier_id = suppliers.id 
 INNER JOIN employees ON orders.employee_id= employees.id
 INNER JOIN complete_incomplete ON orders.completed = complete_incomplete.id
