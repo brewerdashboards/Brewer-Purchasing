@@ -1,12 +1,13 @@
+
 SELECT DISTINCT products.Name as 'ProductName',
-/* currencies.id, */
+currencies.id, 
 suppliers.Name as 'SupplierName', 
 orders.DateCreated as 'OrderDate',
 orders.DateETA as 'ArrivalDate', 
 transactions.count as 'Count', 
-transactions_orders.UnitPrice as 'UnitPrice',
+transactions_orders.UnitPrice * currencies.rate_to_cad as 'UnitPrice',
 /* ((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) as 'Subtotal', */
-(((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) * currencies.rate_to_cad) as 'Subtotal',
+(((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) * (currencies.rate_to_cad)) as 'Subtotal',
 (((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) * (currencies.rate_to_cad) * (((tax_rates.PST + tax_rates.GST + tax_rates.HST)/100.00 + 1.00))) as 'TotalCost',
 paymentoptions.Name as 'PaidWith', 
 employees.FirstName as 'PaidBy', 
