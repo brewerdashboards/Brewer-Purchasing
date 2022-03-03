@@ -1,0 +1,43 @@
+SELECT sum(`source`.`TotalCost`) AS `sum`
+FROM (SELECT DISTINCT products.Name as 'ProductName', 
+suppliers.Name as 'SupplierName', 
+orders.DateCreated as 'OrderDate',
+orders.DateETA as 'ArrivalDate', 
+transactions.count as 'Count', 
+transactions_orders.UnitPrice * currencies.rate_to_cad as 'UnitPrice',
+(((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) * (currencies.rate_to_cad)) as 'Subtotal',
+(((transactions_orders.UnitPrice * transactions.count) + orders.shipping_charge) * (currencies.rate_to_cad) * (((tax_rates.PST + tax_rates.GST + tax_rates.HST)/100.00 + 1.00))) as 'TotalCost',
+paymentoptions.Name as 'PaidWith', 
+employees.FirstName as 'PaidBy', 
+financial_codes.Name as 'FundingGroup', 
+/* orders.completed as 'Complete_Incomplete', */
+CASE orders.completed
+    WHEN 1 THEN 'complete'
+    WHEN 0 THEN 'incomplete'
+    ELSE NULL
+END AS 'Complete_Incomplete' 
+FROM orders 
+INNER JOIN currencies ON orders.orig_currency_id = currencies.id
+INNER JOIN suppliers ON orders.supplier_id = suppliers.id 
+INNER JOIN employees ON orders.employee_id= employees.id
+INNER JOIN financial_codes ON orders.financial_code_id = financial_codes.id 
+INNER JOIN paymentoptions ON orders.paymentoption_id = paymentoptions.id
+INNER JOIN tax_rates ON orders.tax_rate_id = tax_rates.id
+INNER JOIN transactions_orders ON orders.id = transactions_orders.order_id 
+INNER JOIN transactions ON transactions_orders.transaction_id = transactions.id
+INNER JOIN products ON transactions.product_id = products.id
+/*
+WHERE orders.dateETA BETWEEN '2004-11-12'
+   AND  '2022-04-05' AND  suppliers.Name = 'BMV Optical Technologies' AND products.Name LIKE '%Filter%' */
+   /* WHERE products.Name LIKE '%Cable on spool - Data 18 AWG%'  */
+  /* WHERE products.Name LIKE '%18" Auger%'  */
+/*  WHERE transactions.id = 411  */
+/* WHERE transactions.count > 0 */
+/*
+WHERE CASE WHEN MONTH(CURDATE()) <=3 
+THEN orders.dateETA BETWEEN CONCAT (year(curdate())-1, '-4-01')  AND CONCAT (year(curdate()), '-03-31') ELSE orders.dateETA BETWEEN CONCAT (year(curdate())-1, '-4-01')  AND CONCAT (year(curdate()), '-03-31')
+*/
+WHERE transactions.count > 0 AND MONTH(CURDATE()) <=3 AND orders.dateETA BETWEEN CONCAT (year(curdate())-1, '-4-01')  AND CONCAT (year(curdate()), '-03-31')
+    OR transactions.count > 0 AND MONTH(CURDATE()) >3 AND orders.dateETA BETWEEN CONCAT (year(curdate()), '-4-01')  AND CONCAT (year(curdate())+1, '-03-31')
+
+ORDER BY orders.dateETA desc ) `source` WHERE `source`.`Complete_Incomplete` = 'complete'
